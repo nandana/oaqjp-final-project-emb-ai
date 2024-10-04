@@ -16,14 +16,17 @@ def emotion_detector(text_to_analyze: str) -> dict:
     input_data = {"raw_document": {"text": text_to_analyze }}
 
     response = requests.post(EMOTION_DETECTION_API, data=json.dumps(input_data), headers=input_headers)
-    response.raise_for_status()
-
-    output = response.json()
-    # selecting the emotions part of the response
-    emotions = response.json()['emotionPredictions'][0]['emotion']
-    # detecting the emotion with the highest score
-    dominant_emotion = max(emotions, key=emotions.get)
-    # extending the ouput with the dominant emotion
-    emotions['dominant_emotion'] = dominant_emotion
+    if response.status_code == 400:
+        # in case of HTTP 400 error, we return an empty dictionary
+        keys = ["anger", "disgust", "dominant_emotion", "fear", "joy", "sadness"]
+        emotions = {key: None for key in keys}
+    else:  
+        output = response.json()
+        # selecting the emotions part of the response
+        emotions = response.json()['emotionPredictions'][0]['emotion']
+        # detecting the emotion with the highest score
+        dominant_emotion = max(emotions, key=emotions.get)
+        # extending the ouput with the dominant emotion
+        emotions['dominant_emotion'] = dominant_emotion
 
     return emotions
